@@ -54,7 +54,6 @@ A ready-to-deploy DO Functions project is included under `functions/`.
 
 cd functions
 export BG_API_TOKEN="your-internal-token"
-export REMOVE_BG_API_KEY="your-removebg-key"
 doctl serverless deploy .
 ```
 
@@ -74,3 +73,9 @@ curl -X POST "<FUNCTION_URL>" \
   -H "Authorization: Bearer $BG_API_TOKEN" \
   -d '{"image_base64":"<BASE64_IMAGE>"}'
 ```
+
+### Notes
+
+- This version is fully self-hosted and does **not** call remove.bg.
+- First invocation can be slow due to model download/warm-up.
+- Use at least `memory: 1024` for better stability.

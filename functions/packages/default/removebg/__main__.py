@@ -1,9 +1,7 @@
 import os
 import json
 import base64
-import uuid
-import urllib.request
-import urllib.error
+from rembg import remove
 
 
 def _headers(args):
@@ -62,48 +60,6 @@ def _parse_image(args):
         raise ValueError(f"Invalid base64 image: {exc}")
 
 
-def _multipart_body(image_bytes, boundary):
-    crlf = "\r\n"
-    lines = [
-        f"--{boundary}",
-        'Content-Disposition: form-data; name="image_file"; filename="upload.jpg"',
-        "Content-Type: image/jpeg",
-        "",
-    ]
-    head = crlf.join(lines).encode("utf-8") + crlf.encode("utf-8")
-    tail = (crlf + f"--{boundary}--" + crlf).encode("utf-8")
-    return head + image_bytes + tail
-
-
-def _call_remove_bg(image_bytes):
-    api_key = os.getenv("REMOVE_BG_API_KEY", "")
-    if not api_key:
-        raise RuntimeError("Server misconfigured: REMOVE_BG_API_KEY missing")
-
-    boundary = f"----do-fn-{uuid.uuid4().hex}"
-    body = _multipart_body(image_bytes, boundary)
-
-    req = urllib.request.Request(
-        "https://api.remove.bg/v1.0/removebg",
-        data=body,
-        method="POST",
-        headers={
-            "X-Api-Key": api_key,
-            "Content-Type": f"multipart/form-data; boundary={boundary}",
-            "Accept": "image/png",
-        },
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=90) as resp:
-            return resp.read()
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="ignore")
-        raise RuntimeError(f"remove.bg HTTP {exc.code}: {detail}")
-    except Exception as exc:
-        raise RuntimeError(f"remove.bg request failed: {exc}")
-
-
 def main(args):
     ok, msg = _verify_token(args)
     if not ok:
@@ -115,7 +71,8 @@ def main(args):
         if len(image) > max_bytes:
             return _json(413, {"ok": False, "error": f"Image too large (max {max_bytes} bytes)"})
 
-        out_png = _call_remove_bg(image)
+        # Local background removal (self-hosted, no external provider)
+        out_png = remove(image)
 
         return _json(200, {
             "ok": True,

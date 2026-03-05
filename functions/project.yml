@@ -1,0 +1,14 @@
+project: frame-bg-remove-fn
+packages:
+  - name: default
+    actions:
+      - name: removebg
+        runtime: python:default
+        web: true
+        limits:
+          timeout: 120000
+          memory: 512
+        environment:
+          BG_MAX_UPLOAD_BYTES: "10485760"
+          BG_API_TOKEN: "${BG_API_TOKEN}"
+          REMOVE_BG_API_KEY: "${REMOVE_BG_API_KEY}"
